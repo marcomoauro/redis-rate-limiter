@@ -4,6 +4,7 @@ import {query} from '../database.js'
 
 export default class ApiKey {
   id
+  name
   code
   created_at
 
@@ -14,13 +15,14 @@ export default class ApiKey {
   }
 
   static fromDBRow = (row) => {
-    const user = new ApiKey({
+    const api_key = new ApiKey({
       id: row.id,
+      name: row.name,
       code: row.code,
-      created_at: row.created_at, // TODO parse date
+      created_at: row.created_at // TODO parse date
     })
 
-    return user
+    return api_key
   }
 
   static get = async ({id, code}) => {

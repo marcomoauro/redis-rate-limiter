@@ -4,6 +4,8 @@ import path from 'path';
 
 import asyncStorage from './asyncStorage.js';
 import log from './log.js';
+import {createToken, decodeToken} from "./api/jwt.js";
+import {APIError401} from "./errors.js";
 
 export const initAsyncStorage = async (ctx, next) => {
   const id_transaction = nanoid(10);
@@ -82,4 +84,22 @@ const getContextParams = (ctx) => {
   ];
 
   return args;
+};
+
+export const authenticate = async (ctx, next) => {
+  const token = ctx.headers['x-token'] ?? ctx.request.params.api_key_code;
+  if (!token) throw new APIError401();
+
+  decodeToken(token, process.env.JWT_SECRET);
+
+  await next();
+};
+
+export const rateLimit = async (ctx, next) => {
+  const token = ctx.headers['x-token'] ?? ctx.request.params.api_key_code;
+  if (!token) throw new APIError401();
+
+  decodeToken(token, process.env.JWT_SECRET);
+
+  await next();
 };

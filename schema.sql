@@ -1,7 +1,8 @@
-create table _newsletters_template
+create table api_keys
 (
-    id          bigserial primary key,
-    description varchar(255)                        null,
-    created_at  timestamp default CURRENT_TIMESTAMP not null,
-    updated_at  timestamp default CURRENT_TIMESTAMP not null
+    id         bigint unsigned auto_increment primary key,
+    name       varchar(100)                        null,
+    code       varchar(1024)                       not null,
+    created_at timestamp default CURRENT_TIMESTAMP not null,
+    updated_at timestamp default CURRENT_TIMESTAMP not null
 );
