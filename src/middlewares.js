@@ -5,7 +5,9 @@ import path from 'path';
 import asyncStorage from './asyncStorage.js';
 import log from './log.js';
 import {createToken, decodeToken} from "./api/jwt.js";
-import {APIError401} from "./errors.js";
+import {APIError401, APIError404} from "./errors.js";
+import ApiKey from "./models/ApiKey.js";
+import RateLimit from "./api/RateLimit.js";
 
 export const initAsyncStorage = async (ctx, next) => {
   const id_transaction = nanoid(10);
@@ -92,14 +94,29 @@ export const authenticate = async (ctx, next) => {
 
   decodeToken(token, process.env.JWT_SECRET);
 
+  let api_key;
+  try {
+    api_key = await ApiKey.get({code: token});
+  } catch (error) {
+    if (error instanceof APIError404) {
+      throw new APIError401();
+    } else {
+      throw error;
+    }
+  }
+
+  asyncStorage.enterWith({...asyncStorage.getStore(), api_key_id: api_key.id});
+
   await next();
 };
 
 export const rateLimit = async (ctx, next) => {
-  const token = ctx.headers['x-token'] ?? ctx.request.params.api_key_code;
-  if (!token) throw new APIError401();
+  const api_key_id = asyncStorage.getStore()?.api_key_id
 
-  decodeToken(token, process.env.JWT_SECRET);
+  const rate_limit = new RateLimit({code: api_key_id});
+
+  await rate_limit.validateWithinMinute()
+  await rate_limit.validateWithinHour()
 
   await next();
 };
